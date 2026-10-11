@@ -1,0 +1,139 @@
+@model FamilyBudget.Web.Models.FinancialReportViewModel
+@{
+    ViewData["Title"] = "Financial Reports & Exports";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Financial Reports & Analytics</h3>
+        <p class="text-muted mb-0">Detailed statement for <strong>@(new DateTime(Model.Year, Model.Month, 1).ToString("MMMM yyyy"))</strong></p>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <form asp-action="Index" method="get" class="d-flex align-items-center gap-2">
+            <select name="month" class="form-select form-select-sm" style="width: 130px;">
+                @for (int m = 1; m <= 12; m++)
+                {
+                    <option value="@m" selected="@(m == Model.Month)">@(new DateTime(2000, m, 1).ToString("MMMM"))</option>
+                }
+            </select>
+            <select name="year" class="form-select form-select-sm" style="width: 95px;">
+                @for (int y = DateTime.UtcNow.Year - 2; y <= DateTime.UtcNow.Year + 1; y++)
+                {
+                    <option value="@y" selected="@(y == Model.Year)">@y</option>
+                }
+            </select>
+            <button type="submit" class="btn btn-secondary-custom btn-sm">Filter</button>
+        </form>
+        <a asp-action="ExportCsv" asp-route-year="@Model.Year" asp-route-month="@Model.Month" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Transactions (CSV)
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Total Inflows</div>
+            <div class="stat-value text-success">@Model.CurrencySymbol@Model.TotalIncome.ToString("N2")</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Total Outflows</div>
+            <div class="stat-value text-danger">@Model.CurrencySymbol@Model.TotalExpenses.ToString("N2")</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Net Surplus / Savings</div>
+            <div class="stat-value @(Model.NetSavings >= 0 ? "text-primary" : "text-danger")">
+                @Model.CurrencySymbol@Model.NetSavings.ToString("N2")
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Savings Rate</div>
+            <div class="stat-value @(Model.SavingsRatePercentage >= 20 ? "text-success" : (Model.SavingsRatePercentage >= 0 ? "text-warning" : "text-danger"))">
+                @Model.SavingsRatePercentage%
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card glass-card border-0 p-4 h-100">
+            <h6 class="fw-bold mb-3">Expenses by Category</h6>
+            @if (Model.CategoryBreakdown.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-custom align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="text-end">Amount</th>
+                                <th class="text-end">% Share</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in Model.CategoryBreakdown)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="category-dot" style="background-color: @c.ColorHex;"></span>
+                                        <span class="fw-semibold">@c.CategoryName</span>
+                                    </td>
+                                    <td class="text-end fw-bold text-danger">@Model.CurrencySymbol@c.Amount.ToString("N2")</td>
+                                    <td class="text-end text-muted small">@c.Percentage%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4 text-muted">No expenses recorded for this month.</div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card glass-card border-0 p-4 h-100">
+            <h6 class="fw-bold mb-3">Member Spending & Income</h6>
+            @if (Model.MemberBreakdown.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-custom align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th class="text-end">Paid Out</th>
+                                <th class="text-end">Income In</th>
+                                <th class="text-end">Net</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var m in Model.MemberBreakdown)
+                            {
+                                <tr>
+                                    <td><span class="fw-semibold">@m.MemberName</span></td>
+                                    <td class="text-end text-danger fw-bold">@Model.CurrencySymbol@m.TotalPaid.ToString("N2")</td>
+                                    <td class="text-end text-success fw-bold">@Model.CurrencySymbol@m.TotalIncomeContributed.ToString("N2")</td>
+                                    <td class="text-end fw-bold @(m.NetBalance >= 0 ? "text-success" : "text-danger")">@Model.CurrencySymbol@m.NetBalance.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4 text-muted">No member activity this period.</div>
+            }
+        </div>
+    </div>
+</div>

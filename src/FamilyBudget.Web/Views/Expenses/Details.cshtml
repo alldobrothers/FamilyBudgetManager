@@ -1,0 +1,122 @@
+@model FamilyBudget.Web.Models.ExpenseDetailsViewModel
+@{
+    ViewData["Title"] = "Expense Details";
+    var exp = Model.Expense;
+    var currencySymbol = Model.CurrencySymbol;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card glass-card border-0 p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="badge badge-pill-custom badge-expense mb-2">Expense</span>
+                    <h3 class="fw-bold mb-0">@exp.Title</h3>
+                    <div class="text-muted small">Recorded on @exp.ExpenseDate.ToString("MMMM dd, yyyy")</div>
+                </div>
+                <div class="text-end">
+                    <div class="display-6 fw-bold text-danger">-@currencySymbol@exp.Amount.ToString("N2")</div>
+                    <span class="badge @(exp.Status == TransactionStatus.Confirmed ? "bg-success" : (exp.Status == TransactionStatus.PendingApproval ? "bg-warning" : "bg-danger"))">
+                        @exp.Status
+                    </span>
+                </div>
+            </div>
+
+            <hr class="my-3" />
+
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6 col-md-3">
+                    <div class="text-muted small">Category</div>
+                    <div class="fw-semibold">
+                        <span class="category-dot" style="background-color: @(exp.Category?.ColorHex ?? "#6366f1")"></span>
+                        @(exp.Category?.Name ?? "Uncategorized")
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="text-muted small">Paid By</div>
+                    <div class="fw-semibold">@(exp.PaidByMember?.User?.FullName ?? "Unknown")</div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="text-muted small">Payment Method</div>
+                    <div class="fw-semibold">@exp.PaymentMethod</div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="text-muted small">Merchant / Store</div>
+                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(exp.MerchantOrShop) ? "—" : exp.MerchantOrShop)</div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(exp.Notes))
+            {
+                <div class="mb-4">
+                    <div class="text-muted small">Notes</div>
+                    <div class="p-3 rounded-2 bg-light border small">@exp.Notes</div>
+                </div>
+            }
+
+            <!-- Receipt -->
+            @if (!string.IsNullOrWhiteSpace(exp.ReceiptPath))
+            {
+                <div class="mb-4">
+                    <div class="text-muted small mb-2">Attached Receipt</div>
+                    <div class="card p-3 border rounded-3 d-flex flex-row align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-file-earmark-check-fill text-primary fs-3"></i>
+                            <div>
+                                <div class="fw-bold small">Receipt Document</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Verified upload</div>
+                            </div>
+                        </div>
+                        <a href="@exp.ReceiptPath" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> View Receipt
+                        </a>
+                    </div>
+                </div>
+            }
+
+            <!-- Expense Split Breakdown -->
+            @if (exp.Splits.Any())
+            {
+                <div class="mb-4">
+                    <div class="text-muted small mb-2">Split Breakdown (@exp.Splits.Count members)</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Member</th>
+                                    <th>Split Type</th>
+                                    <th>Percentage</th>
+                                    <th class="text-end">Share Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var split in exp.Splits)
+                                {
+                                    <tr>
+                                        <td><span class="fw-semibold">@(split.BeneficiaryMember?.User?.DisplayName ?? "Member")</span></td>
+                                        <td><span class="badge bg-light text-dark border">@split.SplitType</span></td>
+                                        <td>@(split.SplitPercentage.HasValue ? $"{split.SplitPercentage:N1}%" : "—")</td>
+                                        <td class="text-end fw-bold">@currencySymbol@split.SplitAmount.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                <a asp-action="Index" class="btn btn-secondary-custom">Back to List</a>
+                @if (Model.CanDelete)
+                {
+                    <form asp-action="Delete" asp-route-id="@exp.Id" method="post" onsubmit="return confirm('Are you sure?');" class="m-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,143 @@
+@model FamilyBudget.Web.Models.FamilyMembersViewModel
+@{
+    ViewData["Title"] = "Household Members";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Household Members</h3>
+        <p class="text-muted mb-0">Collaborators in <strong>@Model.Family.Name</strong></p>
+    </div>
+    @if (Model.UserRole == FamilyRole.Owner || Model.UserRole == FamilyRole.Admin)
+    {
+        <a asp-action="Invite" class="btn btn-primary-custom">
+            <i class="bi bi-person-plus-fill"></i> Invite Member
+        </a>
+    }
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <!-- Active Members List -->
+        <div class="card glass-card border-0 mb-4 overflow-hidden">
+            <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold mb-0">Active Members (@Model.Members.Count)</h6>
+                <span class="badge bg-primary-subtle text-primary">Live Household</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                            <th>Permissions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var member in Model.Members)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; font-weight: 700;">
+                                            @(member.User?.DisplayName?.Substring(0, 1).ToUpper() ?? "U")
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">@member.User?.FullName</div>
+                                            <div class="text-muted small">@member.User?.DisplayName</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="text-muted">@member.User?.Email</span></td>
+                                <td>
+                                    <span class="badge badge-pill-custom @(member.Role == FamilyRole.Owner ? "bg-warning-subtle text-warning-emphasis" : (member.Role == FamilyRole.Admin ? "bg-info-subtle text-info-emphasis" : "badge-role"))">
+                                        @member.Role
+                                    </span>
+                                </td>
+                                <td><span class="text-muted small">@member.JoinedAt.ToString("MMM dd, yyyy")</span></td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        @if (member.CanApproveExpenses)
+                                        {
+                                            <span class="badge bg-light text-dark border" title="Approves Expenses"><i class="bi bi-check-circle text-success"></i> Approve</span>
+                                        }
+                                        @if (member.CanManageBills)
+                                        {
+                                            <span class="badge bg-light text-dark border" title="Manages Bills"><i class="bi bi-receipt text-primary"></i> Bills</span>
+                                        }
+                                        @if (member.CanExportReports)
+                                        {
+                                            <span class="badge bg-light text-dark border" title="Exports Reports"><i class="bi bi-download text-secondary"></i> Export</span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pending Invitations -->
+        @if (Model.PendingInvitations.Any())
+        {
+            <div class="card glass-card border-0 mb-4">
+                <div class="card-header bg-transparent py-3 border-bottom">
+                    <h6 class="fw-bold mb-0">Pending Invitations (@Model.PendingInvitations.Count)</h6>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-custom align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Invited Email</th>
+                                <th>Role</th>
+                                <th>Invited On</th>
+                                <th>Expires On</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var invite in Model.PendingInvitations)
+                            {
+                                <tr>
+                                    <td><span class="fw-semibold">@invite.InvitedEmail</span></td>
+                                    <td><span class="badge badge-pill-custom badge-role">@invite.InvitedRole</span></td>
+                                    <td><span class="text-muted small">@invite.CreatedAt.ToString("MMM dd, yyyy")</span></td>
+                                    <td><span class="text-muted small">@invite.ExpiresAt.ToString("MMM dd, yyyy")</span></td>
+                                    <td><span class="badge badge-pill-custom badge-pending">Pending</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Roles & Permissions Explanatory Card -->
+    <div class="col-lg-4">
+        <div class="card glass-card border-0 p-4">
+            <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-shield-check text-primary"></i> Role Permissions Guide
+            </h6>
+            <div class="mb-3 pb-2 border-bottom">
+                <div class="fw-bold text-primary small">Owner</div>
+                <div class="text-muted small">Created the household. Has ultimate administrative control, can delete or configure all aspects.</div>
+            </div>
+            <div class="mb-3 pb-2 border-bottom">
+                <div class="fw-bold text-info-emphasis small">Admin</div>
+                <div class="text-muted small">Can invite members, approve expenditures, manage recurring bills, and view debt portfolios.</div>
+            </div>
+            <div class="mb-3 pb-2 border-bottom">
+                <div class="fw-bold text-dark small">Member</div>
+                <div class="text-muted small">Can record income, expenses, view shared household totals, and participate in splits.</div>
+            </div>
+            <div>
+                <div class="fw-bold text-secondary small">Viewer / Teen</div>
+                <div class="text-muted small">Read-only dashboard view or limited recording of personal expenses without admin privileges.</div>
+            </div>
+        </div>
+    </div>
+</div>

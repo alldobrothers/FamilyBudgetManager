@@ -1,0 +1,50 @@
+@model FamilyBudget.Web.Models.InviteMemberViewModel
+@{
+    ViewData["Title"] = "Invite Household Member";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+        <div class="card glass-card border-0 p-4">
+            <h4 class="fw-bold mb-1">Invite Family Member</h4>
+            <p class="text-muted small mb-4">Send an onboarding invitation link to join <strong>@Model.FamilyName</strong></p>
+
+            <form asp-action="Invite" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="FamilyId" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent text-muted"><i class="bi bi-envelope"></i></span>
+                        <input asp-for="Email" class="form-control" placeholder="member@example.com" autofocus />
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Role" class="form-label"></label>
+                    <select asp-for="Role" class="form-select">
+                        <option value="Admin">Admin (Can manage bills, approvals, & invites)</option>
+                        <option value="Member" selected>Member (Can record expenses & income)</option>
+                        <option value="Teen">Teen (Can record personal expenses)</option>
+                        <option value="Viewer">Viewer (Read-only access)</option>
+                    </select>
+                    <span asp-validation-for="Role" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Members" class="btn btn-secondary-custom">Cancel</a>
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="bi bi-send"></i> Send Invitation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

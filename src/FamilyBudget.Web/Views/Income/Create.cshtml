@@ -1,0 +1,103 @@
+@model FamilyBudget.Web.Models.CreateIncomeViewModel
+@{
+    ViewData["Title"] = "Record Income";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card glass-card border-0 p-4">
+            <h4 class="fw-bold mb-1">Record Household Income</h4>
+            <p class="text-muted small mb-4">Add a new financial inflow into your household</p>
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" placeholder="e.g. October Monthly Salary, Freelance Payout" autofocus />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Amount" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent text-muted">@Model.CurrencySymbol</span>
+                            <input asp-for="Amount" type="number" step="0.01" class="form-control" placeholder="0.00" />
+                        </div>
+                        <span asp-validation-for="Amount" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="IncomeSource" class="form-label"></label>
+                        <input asp-for="IncomeSource" class="form-control" placeholder="e.g. Employer, Client, Investment Dividend" />
+                        <span asp-validation-for="IncomeSource" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="CategoryId" class="form-label"></label>
+                        <select asp-for="CategoryId" class="form-select">
+                            <option value="">-- Select Category --</option>
+                            @foreach (var c in Model.Categories)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="RecipientMemberId" class="form-label"></label>
+                        <select asp-for="RecipientMemberId" class="form-select">
+                            @foreach (var m in Model.Members)
+                            {
+                                <option value="@m.Id">@m.User?.FullName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="DateReceived" class="form-label"></label>
+                        <input asp-for="DateReceived" type="date" class="form-control" />
+                        <span asp-validation-for="DateReceived" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="PaymentMethod" class="form-label"></label>
+                        <select asp-for="PaymentMethod" class="form-select">
+                            <option value="Direct Deposit">Direct Deposit / Bank Transfer</option>
+                            <option value="UPI">UPI / GPay / PhonePe</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Cheque">Cheque</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-check form-switch mb-3">
+                    <input asp-for="IsRecurring" class="form-check-input" type="checkbox" id="recurringSwitch" />
+                    <label class="form-check-label fw-semibold" for="recurringSwitch">Recurring Monthly Income</label>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Optional notes..."></textarea>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-secondary-custom">Cancel</a>
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="bi bi-check2"></i> Save Income
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

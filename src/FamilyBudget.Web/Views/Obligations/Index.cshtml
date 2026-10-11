@@ -1,0 +1,93 @@
+@model FamilyBudget.Web.Models.ObligationListViewModel
+@{
+    ViewData["Title"] = "Payment Obligations";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Payment Obligations & Dues</h3>
+        <p class="text-muted mb-0">Total pending: <strong class="text-danger">@Model.CurrencySymbol@Model.TotalPendingObligations.ToString("N2")</strong></p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary-custom">
+        <i class="bi bi-plus-lg"></i> Add Obligation
+    </a>
+</div>
+
+<div class="card glass-card border-0 mb-4 overflow-hidden">
+    @if (Model.Obligations.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-custom align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Obligation</th>
+                        <th>Payee</th>
+                        <th>Type</th>
+                        <th>Due Date</th>
+                        <th>Priority</th>
+                        <th>Due / Paid</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ob in Model.Obligations)
+                    {
+                        var isOverdue = ob.DueDate.Date < DateTime.UtcNow.Date && ob.Status != ObligationStatus.Paid;
+                        <tr class="@(isOverdue ? "table-danger-subtle" : "")">
+                            <td>
+                                <div class="fw-bold">@ob.Title</div>
+                                @if (ob.ResponsibleMember != null)
+                                {
+                                    <div class="text-muted small">Assigned: @ob.ResponsibleMember.User?.DisplayName</div>
+                                }
+                            </td>
+                            <td><span class="text-muted">@ob.PayeeName</span></td>
+                            <td><span class="badge bg-light text-dark border">@ob.ObligationType</span></td>
+                            <td>
+                                <span class="fw-semibold @(isOverdue ? "text-danger" : "")">@ob.DueDate.ToString("MMM dd, yyyy")</span>
+                                @if (isOverdue)
+                                {
+                                    <span class="badge bg-danger ms-1 small">OVERDUE</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge @(ob.Priority == ObligationPriority.High || ob.Priority == ObligationPriority.Urgent ? "bg-danger-subtle text-danger" : "bg-secondary-subtle text-secondary")">
+                                    @ob.Priority
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-danger">@Model.CurrencySymbol@ob.RemainingBalance.ToString("N2")</div>
+                                @if (ob.AmountPaid > 0)
+                                {
+                                    <div class="text-muted small">Paid: @Model.CurrencySymbol@ob.AmountPaid.ToString("N2")</div>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge badge-pill-custom @(ob.Status == ObligationStatus.Paid ? "bg-success text-white" : (isOverdue ? "bg-danger text-white" : "bg-warning-subtle text-warning-emphasis"))">
+                                    @ob.Status
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                @if (ob.Status != ObligationStatus.Paid)
+                                {
+                                    <a asp-action="Settle" asp-route-id="@ob.Id" class="btn btn-sm btn-primary-custom py-1">
+                                        <i class="bi bi-check2"></i> Settle
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success-subtle text-success"><i class="bi bi-check-all"></i> Done</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-4 text-muted">No pending payment obligations on record.</div>
+    }
+</div>

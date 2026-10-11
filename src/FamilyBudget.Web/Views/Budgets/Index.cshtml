@@ -1,0 +1,145 @@
+@model FamilyBudget.Web.Models.BudgetPlannerViewModel
+@{
+    ViewData["Title"] = "Monthly Budget Planner";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Budget Planner</h3>
+        <p class="text-muted mb-0">Plan targets for <strong>@(new DateTime(Model.Year, Model.Month, 1).ToString("MMMM yyyy"))</strong></p>
+    </div>
+
+    <!-- Month & Year Selector -->
+    <form asp-action="Index" method="get" class="d-flex align-items-center gap-2">
+        <select name="month" class="form-select form-select-sm" style="width: 140px;">
+            @for (int m = 1; m <= 12; m++)
+            {
+                <option value="@m" selected="@(m == Model.Month)">@(new DateTime(2000, m, 1).ToString("MMMM"))</option>
+            }
+        </select>
+        <select name="year" class="form-select form-select-sm" style="width: 100px;">
+            @for (int y = DateTime.UtcNow.Year - 1; y <= DateTime.UtcNow.Year + 1; y++)
+            {
+                <option value="@y" selected="@(y == Model.Year)">@y</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-secondary-custom btn-sm">
+            <i class="bi bi-filter"></i> Switch
+        </button>
+    </form>
+</div>
+
+<!-- Category Targets Allocation Form -->
+<form asp-action="Save" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Year" />
+    <input type="hidden" asp-for="Month" />
+    <input type="hidden" asp-for="BudgetId" />
+
+    <!-- Budget Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-label">Total Monthly Budget Limit</div>
+                <div class="input-group input-group-sm mt-1">
+                    <span class="input-group-text bg-transparent text-muted">@Model.CurrencySymbol</span>
+                    <input asp-for="TotalPlannedBudget" type="number" step="100" class="form-control fw-bold fs-5 text-primary" />
+                </div>
+                <div class="text-muted small mt-1">Overall household spending cap</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-label">Actual Spent This Month</div>
+                <div class="stat-value text-danger">@Model.CurrencySymbol@Model.TotalActualSpent.ToString("N2")</div>
+                <div class="text-muted small mt-1">Confirmed expenditures so far</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-label">Rollover Surplus from Prior Month</div>
+                <div class="input-group input-group-sm mt-1">
+                    <span class="input-group-text bg-transparent text-muted">@Model.CurrencySymbol</span>
+                    <input asp-for="RolloverAmount" type="number" step="1" class="form-control fw-bold" />
+                </div>
+                <div class="text-muted small mt-1">Unspent balance carried forward</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card glass-card border-0 mb-4 overflow-hidden">
+        <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center justify-content-between">
+            <h6 class="fw-bold mb-0">Category Target Allocations</h6>
+            <button type="submit" class="btn btn-primary-custom btn-sm">
+                <i class="bi bi-save"></i> Save Budget Plan
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-custom align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th style="width: 200px;">Planned Target (@Model.CurrencySymbol)</th>
+                        <th class="text-end">Actual Spent</th>
+                        <th style="width: 250px;">Utilization Progress</th>
+                        <th class="text-end">Remaining</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.CategoryAllocations.Count; i++)
+                    {
+                        var item = Model.CategoryAllocations[i];
+                        var utilPct = item.PlannedAmount > 0 ? (int)Math.Round((item.SpentAmount / item.PlannedAmount) * 100) : (item.SpentAmount > 0 ? 100 : 0);
+                        var remaining = item.PlannedAmount - item.SpentAmount;
+                        <tr>
+                            <td>
+                                <input type="hidden" name="CategoryAllocations[@i].CategoryId" value="@item.CategoryId" />
+                                <input type="hidden" name="CategoryAllocations[@i].CategoryName" value="@item.CategoryName" />
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="category-dot" style="background-color: @item.ColorHex;"></span>
+                                    <span class="fw-semibold">@item.CategoryName</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent text-muted">@Model.CurrencySymbol</span>
+                                    <input type="number" step="10" name="CategoryAllocations[@i].PlannedAmount" value="@item.PlannedAmount" class="form-control" />
+                                </div>
+                            </td>
+                            <td class="text-end fw-bold text-danger">
+                                @Model.CurrencySymbol@item.SpentAmount.ToString("N2")
+                            </td>
+                            <td>
+                                <div class="progress progress-budget mb-1">
+                                    <div class="progress-bar @(utilPct >= 100 ? "bg-danger" : (utilPct >= 80 ? "bg-warning" : "bg-primary"))" 
+                                         role="progressbar" 
+                                         style="width: @Math.Min(100, utilPct)%"></div>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted" style="font-size: 0.72rem;">
+                                    <span>@utilPct% spent</span>
+                                    @if (utilPct >= 100)
+                                    {
+                                        <span class="text-danger fw-bold">OVER LIMIT</span>
+                                    }
+                                </div>
+                            </td>
+                            <td class="text-end fw-bold @(remaining >= 0 ? "text-success" : "text-danger")">
+                                @Model.CurrencySymbol@remaining.ToString("N2")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card-footer bg-transparent py-3 border-top d-flex justify-content-between align-items-center">
+            <div class="col-md-6">
+                <input asp-for="Notes" class="form-control form-control-sm" placeholder="Optional notes for this monthly budget..." />
+            </div>
+            <button type="submit" class="btn btn-primary-custom">
+                <i class="bi bi-save"></i> Save Budget Plan
+            </button>
+        </div>
+    </div>
+</form>

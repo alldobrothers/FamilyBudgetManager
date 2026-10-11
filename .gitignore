@@ -1,0 +1,30 @@
+## .NET Core / C# .gitignore
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Database & SQLite files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Uploads and temporary runtime files
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
+/tmp/
+
+# OS generated
+.DS_Store
+Thumbs.db
+desktop.ini

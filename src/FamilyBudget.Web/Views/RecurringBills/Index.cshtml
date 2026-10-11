@@ -1,0 +1,151 @@
+@model FamilyBudget.Web.Models.BillTemplateListViewModel
+@{
+    ViewData["Title"] = "Recurring Bills";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Recurring Bills & Subscriptions</h3>
+        <p class="text-muted mb-0">Total pending this billing cycle: <strong class="text-danger">@Model.CurrencySymbol@Model.TotalPendingThisMonth.ToString("N2")</strong></p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary-custom">
+        <i class="bi bi-plus-lg"></i> Add Recurring Bill
+    </a>
+</div>
+
+<!-- Upcoming Due Occurrences -->
+<div class="card glass-card border-0 mb-4 overflow-hidden">
+    <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center justify-content-between">
+        <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-clock-history text-primary"></i> Upcoming & Overdue Dues (@Model.UpcomingOccurrences.Count)
+        </h6>
+    </div>
+
+    @if (Model.UpcomingOccurrences.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-custom align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Bill</th>
+                        <th>Due Date</th>
+                        <th>Expected</th>
+                        <th>Paid So Far</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var occ in Model.UpcomingOccurrences)
+                    {
+                        var isOverdue = occ.DueDate.Date < DateTime.UtcNow.Date && occ.Status != BillOccurrenceStatus.Paid;
+                        <tr class="@(isOverdue ? "table-danger-subtle" : "")">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-receipt"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">@occ.BillTemplate?.BillName</div>
+                                        <div class="text-muted small">Payee: @occ.BillTemplate?.Payee</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="fw-semibold @(isOverdue ? "text-danger" : "")">@occ.DueDate.ToString("MMM dd, yyyy")</span>
+                                @if (isOverdue)
+                                {
+                                    <span class="badge bg-danger ms-1" style="font-size: 0.65rem;">OVERDUE</span>
+                                }
+                            </td>
+                            <td>@Model.CurrencySymbol@occ.ExpectedAmount.ToString("N2")</td>
+                            <td>
+                                @if (occ.ActualAmountPaid > 0)
+                                {
+                                    <span class="text-success fw-semibold">@Model.CurrencySymbol@occ.ActualAmountPaid.ToString("N2")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge badge-pill-custom @(occ.Status == BillOccurrenceStatus.Paid ? "bg-success text-white" : (isOverdue ? "bg-danger text-white" : "bg-warning-subtle text-warning-emphasis"))">
+                                    @occ.Status
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                @if (occ.Status != BillOccurrenceStatus.Paid)
+                                {
+                                    <a asp-action="MarkPaid" asp-route-id="@occ.Id" class="btn btn-sm btn-primary-custom py-1">
+                                        <i class="bi bi-check2"></i> Mark Paid
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success-subtle text-success"><i class="bi bi-check-all"></i> Settled</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-4 text-muted">No pending bill occurrences due.</div>
+    }
+</div>
+
+<!-- Recurring Bill Templates -->
+<div class="card glass-card border-0 mb-4 overflow-hidden">
+    <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center justify-content-between">
+        <h6 class="fw-bold mb-0">Active Recurring Bill Templates (@Model.Templates.Count)</h6>
+    </div>
+
+    @if (Model.Templates.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-custom align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Bill Template</th>
+                        <th>Payee</th>
+                        <th>Category</th>
+                        <th>Frequency</th>
+                        <th>Next Due Date</th>
+                        <th>Expected Amount</th>
+                        <th>Responsible</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Model.Templates)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold">@t.BillName</div>
+                                @if (t.AutopayEnabled)
+                                {
+                                    <span class="badge bg-info-subtle text-info" style="font-size: 0.65rem;"><i class="bi bi-lightning-charge"></i> Autopay</span>
+                                }
+                            </td>
+                            <td><span class="text-muted">@t.Payee</span></td>
+                            <td>
+                                <span class="badge bg-light text-dark border">@(t.Category?.Name ?? "Bills")</span>
+                            </td>
+                            <td><span class="badge bg-secondary-subtle text-secondary">@t.Frequency</span></td>
+                            <td><span class="fw-semibold">@t.NextDueDate.ToString("MMM dd, yyyy")</span></td>
+                            <td class="fw-bold">@Model.CurrencySymbol@t.ExpectedAmount.ToString("N2")</td>
+                            <td><span class="text-muted small">@(t.ResponsibleMember?.User?.DisplayName ?? "Household")</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-4 text-muted">No recurring bill templates configured yet.</div>
+    }
+</div>

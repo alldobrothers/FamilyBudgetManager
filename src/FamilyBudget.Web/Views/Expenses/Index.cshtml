@@ -1,0 +1,173 @@
+@model FamilyBudget.Web.Models.ExpenseListViewModel
+@{
+    ViewData["Title"] = "Expenses";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Household Expenses</h3>
+        <p class="text-muted mb-0">Total spent this period: <strong class="text-danger">@Model.CurrencySymbol@Model.TotalFilteredAmount.ToString("N2")</strong></p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="PendingApprovals" class="btn btn-secondary-custom">
+            <i class="bi bi-clock-history"></i> Approvals
+        </a>
+        <a asp-action="Create" class="btn btn-primary-custom">
+            <i class="bi bi-plus-lg"></i> Record Expense
+        </a>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card glass-card border-0 p-3 mb-4">
+    <form asp-action="Index" method="get" class="row g-2 align-items-center">
+        <div class="col-md-3">
+            <input type="text" name="SearchTerm" value="@Model.SearchTerm" class="form-control form-control-sm" placeholder="Search title or merchant..." />
+        </div>
+        <div class="col-md-3">
+            <select name="CategoryId" class="form-select form-select-sm">
+                <option value="">All Categories</option>
+                @foreach (var c in Model.Categories)
+                {
+                    <option value="@c.Id" selected="@(c.Id == Model.SelectedCategoryId)">@c.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="MemberId" class="form-select form-select-sm">
+                <option value="">All Members</option>
+                @foreach (var m in Model.Members)
+                {
+                    <option value="@m.Id" selected="@(m.Id == Model.SelectedMemberId)">@m.User?.DisplayName</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="month" class="form-select form-select-sm">
+                @for (int m = 1; m <= 12; m++)
+                {
+                    <option value="@m" selected="@(m == (Model.SelectedMonth ?? DateTime.UtcNow.Month))">@(new DateTime(2000, m, 1).ToString("MMM"))</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-secondary-custom btn-sm flex-grow-1">
+                <i class="bi bi-funnel"></i> Filter
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm" title="Clear Filters">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Expenses Table -->
+<div class="card glass-card border-0 mb-4 overflow-hidden">
+    @if (Model.Expenses.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-custom align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Expense</th>
+                        <th>Category</th>
+                        <th>Paid By</th>
+                        <th>Date</th>
+                        <th>Method</th>
+                        <th>Split</th>
+                        <th>Status</th>
+                        <th class="text-end">Amount</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var exp in Model.Expenses)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-bag"></i>
+                                    </div>
+                                    <div>
+                                        <a asp-action="Details" asp-route-id="@exp.Id" class="fw-bold text-decoration-none text-dark">@exp.Title</a>
+                                        @if (!string.IsNullOrWhiteSpace(exp.MerchantOrShop))
+                                        {
+                                            <div class="text-muted small">@exp.MerchantOrShop</div>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    <span class="category-dot" style="background-color: @(exp.Category?.ColorHex ?? "#6366f1")"></span>
+                                    @(exp.Category?.Name ?? "Uncategorized")
+                                </span>
+                            </td>
+                            <td><span class="text-muted small">@(exp.PaidByMember?.User?.DisplayName ?? exp.PaidByMember?.User?.FullName ?? "Unknown")</span></td>
+                            <td><span class="text-muted small">@exp.ExpenseDate.ToString("MMM dd, yyyy")</span></td>
+                            <td><span class="badge bg-secondary-subtle text-secondary small">@exp.PaymentMethod</span></td>
+                            <td>
+                                @if (exp.Splits.Any())
+                                {
+                                    <span class="badge bg-info-subtle text-info" title="@exp.Splits.Count members split">
+                                        <i class="bi bi-pie-chart"></i> @exp.Splits.Count members
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                            </td>
+                            <td>
+                                @if (exp.Status == TransactionStatus.Confirmed)
+                                {
+                                    <span class="badge badge-pill-custom badge-income">Confirmed</span>
+                                }
+                                else if (exp.Status == TransactionStatus.PendingApproval)
+                                {
+                                    <span class="badge badge-pill-custom badge-pending">Pending</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-pill-custom badge-expense">@exp.Status</span>
+                                }
+                            </td>
+                            <td class="text-end fw-bold text-danger">-@Model.CurrencySymbol@exp.Amount.ToString("N2")</td>
+                            <td class="text-end">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-link text-muted p-0" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-1">
+                                        <li>
+                                            <a class="dropdown-item py-1 small" asp-action="Details" asp-route-id="@exp.Id">
+                                                <i class="bi bi-eye me-2"></i> Details
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <form asp-action="Delete" asp-route-id="@exp.Id" method="post" onsubmit="return confirm('Delete this expense?');" class="m-0">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="dropdown-item py-1 small text-danger">
+                                                    <i class="bi bi-trash me-2"></i> Delete
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-receipt fs-1 mb-2"></i>
+            <div>No expenses match the current filters.</div>
+            <div class="mt-3"><a asp-action="Create" class="btn btn-primary-custom btn-sm">Record New Expense</a></div>
+        </div>
+    }
+</div>

@@ -1,0 +1,69 @@
+@model FamilyBudget.Web.Models.UserProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card glass-card border-0 p-4">
+            <h4 class="fw-bold mb-1">User Account & Preferences</h4>
+            <p class="text-muted small mb-4">Manage your profile details and theme defaults</p>
+
+            <form asp-action="Profile" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="FullName" class="form-label"></label>
+                        <input asp-for="FullName" class="form-control" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DisplayName" class="form-label"></label>
+                        <input asp-for="DisplayName" class="form-control" placeholder="Short name for transactions" />
+                        <span asp-validation-for="DisplayName" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" readonly disabled />
+                    <div class="form-text small">Your primary login email cannot be changed directly.</div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label asp-for="PreferredCurrency" class="form-label"></label>
+                        <select asp-for="PreferredCurrency" class="form-select">
+                            <option value="INR">INR (₹ - Indian Rupee)</option>
+                            <option value="USD">USD ($ - US Dollar)</option>
+                            <option value="EUR">EUR (€ - Euro)</option>
+                            <option value="GBP">GBP (£ - British Pound)</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="PreferredTheme" class="form-label"></label>
+                        <select asp-for="PreferredTheme" class="form-select">
+                            <option value="light">Light Theme</option>
+                            <option value="dark">Dark Theme</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-controller="Dashboard" asp-action="Index" class="btn btn-secondary-custom">Back to Dashboard</a>
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="bi bi-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

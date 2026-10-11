@@ -1,0 +1,180 @@
+@model FamilyBudget.Web.Models.CreateExpenseViewModel
+@{
+    ViewData["Title"] = "Record Expense";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card glass-card border-0 p-4">
+            <h4 class="fw-bold mb-1">Record Household Expense</h4>
+            <p class="text-muted small mb-4">Add a new outflow with optional receipt and multi-member split</p>
+
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" placeholder="e.g. Weekly Grocery at Supermarket" autofocus />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Amount" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent text-muted">@Model.CurrencySymbol</span>
+                            <input asp-for="Amount" type="number" step="0.01" class="form-control" id="expenseAmountInput" placeholder="0.00" />
+                        </div>
+                        <span asp-validation-for="Amount" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="CategoryId" class="form-label"></label>
+                        <select asp-for="CategoryId" class="form-select">
+                            <option value="">-- Select Category --</option>
+                            @foreach (var c in Model.Categories)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PaidByMemberId" class="form-label"></label>
+                        <select asp-for="PaidByMemberId" class="form-select">
+                            @foreach (var m in Model.Members)
+                            {
+                                <option value="@m.Id">@m.User?.FullName (@m.User?.DisplayName)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="PaidByMemberId" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="ExpenseDate" class="form-label"></label>
+                        <input asp-for="ExpenseDate" type="date" class="form-control" />
+                        <span asp-validation-for="ExpenseDate" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="PaymentMethod" class="form-label"></label>
+                        <select asp-for="PaymentMethod" class="form-select">
+                            <option value="UPI">UPI / GPay / PhonePe</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Debit Card">Debit Card</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Net Banking">Net Banking</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="MerchantOrShop" class="form-label"></label>
+                        <input asp-for="MerchantOrShop" class="form-control" placeholder="e.g. DMart, Amazon" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ReceiptFile" class="form-label"></label>
+                    <input asp-for="ReceiptFile" type="file" class="form-control" accept=".jpg,.jpeg,.png,.pdf" />
+                    <div class="form-text small">Accepted: JPG, PNG, PDF (Max 5MB)</div>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Optional comments..."></textarea>
+                </div>
+
+                <hr class="my-4" />
+
+                <!-- Split Options Section -->
+                <div class="card bg-light border p-3 mb-4 rounded-3">
+                    <div class="form-check form-switch mb-2">
+                        <input asp-for="EnableSplitting" class="form-check-input" type="checkbox" id="splitToggle" />
+                        <label class="form-check-label fw-bold" for="splitToggle">
+                            <i class="bi bi-people me-1"></i> Split this expense among household members
+                        </label>
+                    </div>
+
+                    <div id="splitSection" style="display: @(Model.EnableSplitting ? "block" : "none");">
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small">Split Method</label>
+                                <select asp-for="SplitType" class="form-select form-select-sm" id="splitMethodSelect">
+                                    <option value="Equal">Equally among members</option>
+                                    <option value="Custom">Custom amounts</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Member</th>
+                                        <th style="width: 140px;">Share Amount (@Model.CurrencySymbol)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < Model.Splits.Count; i++)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <input type="hidden" name="Splits[@i].MemberId" value="@Model.Splits[i].MemberId" />
+                                                <span class="fw-semibold small">@Model.Splits[i].MemberName</span>
+                                            </td>
+                                            <td>
+                                                <input type="number" step="0.01" name="Splits[@i].AllocatedAmount" value="@Model.Splits[i].AllocatedAmount" class="form-control form-control-sm split-input" placeholder="0.00" />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-secondary-custom">Cancel</a>
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="bi bi-check2"></i> Save Expense
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const splitToggle = document.getElementById('splitToggle');
+        const splitSection = document.getElementById('splitSection');
+        const expenseAmountInput = document.getElementById('expenseAmountInput');
+        const splitInputs = () => document.querySelectorAll('.split-input');
+        const splitMethodSelect = document.getElementById('splitMethodSelect');
+
+        splitToggle?.addEventListener('change', () => {
+            splitSection.style.display = splitToggle.checked ? 'block' : 'none';
+            if (splitToggle.checked) calculateEqualSplits();
+        });
+
+        expenseAmountInput?.addEventListener('input', () => {
+            if (splitToggle?.checked && splitMethodSelect?.value === 'Equal') calculateEqualSplits();
+        });
+
+        splitMethodSelect?.addEventListener('change', () => {
+            if (splitMethodSelect.value === 'Equal') calculateEqualSplits();
+        });
+
+        function calculateEqualSplits() {
+            const total = parseFloat(expenseAmountInput?.value) || 0;
+            const inputs = splitInputs();
+            if (inputs.length > 0 && total > 0) {
+                const share = (total / inputs.length).toFixed(2);
+                inputs.forEach(input => input.value = share);
+            }
+        }
+    </script>
+}

@@ -1,0 +1,82 @@
+@model FamilyBudget.Web.Models.RegisterViewModel
+@{
+    ViewData["Title"] = "Create Account";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="text-center mb-4">
+            <div class="brand-icon mx-auto mb-3" style="width: 52px; height: 52px; font-size: 1.7rem;">
+                <i class="bi bi-wallet2"></i>
+            </div>
+            <h3 class="fw-bold">Start Managing Your Household</h3>
+            <p class="text-muted">Register to set up collaborative family budgeting</p>
+        </div>
+
+        <div class="card glass-card border-0 shadow-sm p-4 mb-4">
+            <form asp-controller="Account" asp-action="Register" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small" role="alert"></div>
+
+                <div class="mb-3">
+                    <label asp-for="FullName" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent text-muted"><i class="bi bi-person"></i></span>
+                        <input asp-for="FullName" class="form-control" placeholder="e.g. Rahul Sharma" autofocus />
+                    </div>
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent text-muted"><i class="bi bi-envelope"></i></span>
+                        <input asp-for="Email" class="form-control" placeholder="name@example.com" />
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent text-muted"><i class="bi bi-lock"></i></span>
+                        <input asp-for="Password" class="form-control" placeholder="Minimum 6 characters" />
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent text-muted"><i class="bi bi-lock-fill"></i></span>
+                        <input asp-for="ConfirmPassword" class="form-control" placeholder="Re-type password" />
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="InitialFamilyName" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent text-muted"><i class="bi bi-house"></i></span>
+                        <input asp-for="InitialFamilyName" class="form-control" placeholder="e.g. Sharma Household (Optional)" />
+                    </div>
+                    <div class="form-text text-muted small">You will be designated as the household Owner. You can rename or add more families anytime.</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary-custom w-100 justify-content-center py-2 mb-3">
+                    <i class="bi bi-person-check"></i> Complete Registration
+                </button>
+            </form>
+
+            <div class="text-center">
+                <span class="text-muted small">Already have an account?</span>
+                <a asp-action="Login" class="text-decoration-none fw-semibold small ms-1">Sign In</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

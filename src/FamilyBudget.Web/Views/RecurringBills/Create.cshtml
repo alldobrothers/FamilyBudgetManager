@@ -1,0 +1,107 @@
+@model FamilyBudget.Web.Models.CreateBillTemplateViewModel
+@{
+    ViewData["Title"] = "Add Recurring Bill";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card glass-card border-0 p-4">
+            <h4 class="fw-bold mb-1">Add Recurring Bill</h4>
+            <p class="text-muted small mb-4">Set up a scheduled utility, subscription, or recurring family expense</p>
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-7">
+                        <label asp-for="BillName" class="form-label"></label>
+                        <input asp-for="BillName" class="form-control" placeholder="e.g. Fiber Internet, Electricity Bill, Netflix" autofocus />
+                        <span asp-validation-for="BillName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-5">
+                        <label asp-for="Payee" class="form-label"></label>
+                        <input asp-for="Payee" class="form-control" placeholder="e.g. JioFiber, Tata Power, Society" />
+                        <span asp-validation-for="Payee" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="CategoryId" class="form-label"></label>
+                        <select asp-for="CategoryId" class="form-select">
+                            @foreach (var c in Model.Categories)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="ExpectedAmount" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent text-muted">@Model.CurrencySymbol</span>
+                            <input asp-for="ExpectedAmount" type="number" step="0.01" class="form-control" placeholder="0.00" />
+                        </div>
+                        <span asp-validation-for="ExpectedAmount" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="Frequency" class="form-label"></label>
+                        <select asp-for="Frequency" class="form-select">
+                            <option value="Monthly">Monthly</option>
+                            <option value="Weekly">Weekly</option>
+                            <option value="BiWeekly">Bi-Weekly (Fortnightly)</option>
+                            <option value="Quarterly">Quarterly</option>
+                            <option value="Yearly">Yearly</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="BillingStartDate" class="form-label"></label>
+                        <input asp-for="BillingStartDate" type="date" class="form-control" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="NextDueDate" class="form-label"></label>
+                        <input asp-for="NextDueDate" type="date" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label asp-for="ResponsibleMemberId" class="form-label"></label>
+                        <select asp-for="ResponsibleMemberId" class="form-select">
+                            <option value="">-- Any Household Member --</option>
+                            @foreach (var m in Model.Members)
+                            {
+                                <option value="@m.Id">@m.User?.FullName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 d-flex align-items-center pt-3">
+                        <div class="form-check form-switch">
+                            <input asp-for="AutopayEnabled" class="form-check-input" type="checkbox" id="autopaySwitch" />
+                            <label class="form-check-label fw-semibold" for="autopaySwitch">Auto-Debit / Autopay active on bank</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-secondary-custom">Cancel</a>
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="bi bi-save"></i> Save Recurring Bill
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

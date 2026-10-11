@@ -1,0 +1,196 @@
+@model FamilyBudget.Web.Models.DebtListViewModel
+@{
+    ViewData["Title"] = "Debts & Loans";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Debts & Loans Management</h3>
+        <p class="text-muted mb-0">Track household borrowed liabilities and lent receivables</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary-custom">
+        <i class="bi bi-plus-lg"></i> Record Debt / Loan
+    </a>
+</div>
+
+<!-- Debts Overview Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Borrowed Liabilities (Payables)</div>
+                    <div class="stat-value text-danger">@Model.CurrencySymbol@Model.TotalBorrowedOutstanding.ToString("N2")</div>
+                </div>
+                <div class="stat-icon" style="background-color: var(--color-danger-bg); color: var(--color-danger);">
+                    <i class="bi bi-box-arrow-in-down-left"></i>
+                </div>
+            </div>
+            <div class="text-muted small mt-2">Money your household owes to banks/lenders</div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Lent Funds (Receivables)</div>
+                    <div class="stat-value text-success">@Model.CurrencySymbol@Model.TotalLentOutstanding.ToString("N2")</div>
+                </div>
+                <div class="stat-icon" style="background-color: var(--color-success-bg); color: var(--color-success);">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                </div>
+            </div>
+            <div class="text-muted small mt-2">Money lent out to relatives or friends</div>
+        </div>
+    </div>
+</div>
+
+<!-- 1. Borrowed Debts (Liabilities) -->
+<div class="card glass-card border-0 mb-4 overflow-hidden">
+    <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center justify-content-between">
+        <h6 class="fw-bold mb-0 text-danger d-flex align-items-center gap-2">
+            <i class="bi bi-arrow-down-circle"></i> Borrowed Liabilities (@Model.BorrowedDebts.Count)
+        </h6>
+    </div>
+
+    @if (Model.BorrowedDebts.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-custom align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Creditor / Lender</th>
+                        <th>Original Principal</th>
+                        <th>Current Balance</th>
+                        <th>Interest / Due</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var debt in Model.BorrowedDebts)
+                    {
+                        var repaid = debt.Repayments.Sum(r => r.Amount);
+                        var pct = debt.OriginalPrincipal > 0 ? Math.Min(100, Math.Round((repaid / debt.OriginalPrincipal) * 100)) : 0;
+                        <tr>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@debt.Id" class="fw-bold text-decoration-none text-dark">@debt.CreditorOrDebtorName</a>
+                                @if (debt.LinkedMember != null)
+                                {
+                                    <div class="text-muted small">Responsible: @debt.LinkedMember.User?.DisplayName</div>
+                                }
+                            </td>
+                            <td><span class="text-muted">@Model.CurrencySymbol@debt.OriginalPrincipal.ToString("N2")</span></td>
+                            <td>
+                                <div class="fw-bold text-danger">@Model.CurrencySymbol@debt.CurrentBalance.ToString("N2")</div>
+                                <div class="progress progress-budget mt-1" style="width: 100px;">
+                                    <div class="progress-bar bg-success" style="width: @pct%;"></div>
+                                </div>
+                                <span class="text-muted" style="font-size: 0.7rem;">@pct% Repaid</span>
+                            </td>
+                            <td>
+                                @if (debt.InterestRate > 0)
+                                {
+                                    <div>@debt.InterestRate% p.a.</div>
+                                }
+                                @if (debt.DueDate.HasValue)
+                                {
+                                    <div class="text-muted small">Due: @debt.DueDate.Value.ToString("MMM dd, yyyy")</div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted small">Flexible</div>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge badge-pill-custom @(debt.Status == DebtStatus.PaidOff ? "bg-success text-white" : "bg-warning-subtle text-warning-emphasis")">
+                                    @debt.Status
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    @if (debt.Status != DebtStatus.PaidOff)
+                                    {
+                                        <a asp-action="Repay" asp-route-id="@debt.Id" class="btn btn-sm btn-primary-custom py-1">
+                                            <i class="bi bi-cash"></i> Repay
+                                        </a>
+                                    }
+                                    <a asp-action="Details" asp-route-id="@debt.Id" class="btn btn-sm btn-outline-secondary py-1" title="Ledger">
+                                        <i class="bi bi-clock-history"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-4 text-muted">No borrowed liabilities on record.</div>
+    }
+</div>
+
+<!-- 2. Lent Money (Receivables) -->
+<div class="card glass-card border-0 mb-4 overflow-hidden">
+    <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center justify-content-between">
+        <h6 class="fw-bold mb-0 text-success d-flex align-items-center gap-2">
+            <i class="bi bi-arrow-up-circle"></i> Lent Money / Receivables (@Model.LentDebts.Count)
+        </h6>
+    </div>
+
+    @if (Model.LentDebts.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-custom align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Debtor / Borrower</th>
+                        <th>Principal Lent</th>
+                        <th>Outstanding to Receive</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var debt in Model.LentDebts)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@debt.Id" class="fw-bold text-decoration-none text-dark">@debt.CreditorOrDebtorName</a>
+                            </td>
+                            <td>@Model.CurrencySymbol@debt.OriginalPrincipal.ToString("N2")</td>
+                            <td class="fw-bold text-success">@Model.CurrencySymbol@debt.CurrentBalance.ToString("N2")</td>
+                            <td><span class="text-muted small">@(debt.DueDate?.ToString("MMM dd, yyyy") ?? "Flexible")</span></td>
+                            <td>
+                                <span class="badge badge-pill-custom @(debt.Status == DebtStatus.PaidOff ? "bg-success text-white" : "bg-warning-subtle text-warning-emphasis")">
+                                    @debt.Status
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    @if (debt.Status != DebtStatus.PaidOff)
+                                    {
+                                        <a asp-action="Repay" asp-route-id="@debt.Id" class="btn btn-sm btn-success py-1">
+                                            <i class="bi bi-check2"></i> Received
+                                        </a>
+                                    }
+                                    <a asp-action="Details" asp-route-id="@debt.Id" class="btn btn-sm btn-outline-secondary py-1">
+                                        <i class="bi bi-clock-history"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-4 text-muted">No money lent out currently.</div>
+    }
+</div>

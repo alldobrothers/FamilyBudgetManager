@@ -1,0 +1,110 @@
+@model FamilyBudget.Domain.Entities.Debt
+@{
+    ViewData["Title"] = "Debt Details & Ledger";
+    var currencySymbol = ViewBag.CurrencySymbol as string ?? "₹";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card glass-card border-0 p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="badge badge-pill-custom @(Model.DebtType == DebtType.Borrowed ? "badge-expense" : "badge-income") mb-2">
+                        @(Model.DebtType == DebtType.Borrowed ? "Borrowed Liability" : "Lent Receivable")
+                    </span>
+                    <h3 class="fw-bold mb-0">@Model.CreditorOrDebtorName</h3>
+                    <div class="text-muted small">Started on @Model.StartDate.ToString("MMMM dd, yyyy")</div>
+                </div>
+                <div class="text-end">
+                    <div class="display-6 fw-bold @(Model.DebtType == DebtType.Borrowed ? "text-danger" : "text-success")">
+                        @currencySymbol@Model.CurrentBalance.ToString("N2")
+                    </div>
+                    <div class="text-muted small">Remaining Balance</div>
+                </div>
+            </div>
+
+            <hr class="my-3" />
+
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6 col-md-3">
+                    <div class="text-muted small">Original Principal</div>
+                    <div class="fw-semibold">@currencySymbol@Model.OriginalPrincipal.ToString("N2")</div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="text-muted small">Interest Rate</div>
+                    <div class="fw-semibold">@(Model.InterestRate > 0 ? $"{Model.InterestRate}% p.a." : "0% (Interest-Free)")</div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="text-muted small">Responsible Member</div>
+                    <div class="fw-semibold">@(Model.LinkedMember?.User?.FullName ?? "Household")</div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="text-muted small">Due Date</div>
+                    <div class="fw-semibold">@(Model.DueDate?.ToString("MMM dd, yyyy") ?? "Flexible")</div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Notes))
+            {
+                <div class="mb-4">
+                    <div class="text-muted small">Notes</div>
+                    <div class="p-3 bg-light rounded-2 small">@Model.Notes</div>
+                </div>
+            }
+
+            <!-- Repayment History Ledger -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0">Repayment Ledger History (@Model.Repayments.Count)</h6>
+                    @if (Model.Status != DebtStatus.PaidOff)
+                    {
+                        <a asp-action="Repay" asp-route-id="@Model.Id" class="btn btn-sm btn-primary-custom">
+                            <i class="bi bi-plus-lg"></i> Record Payment
+                        </a>
+                    }
+                </div>
+
+                @if (Model.Repayments.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-custom align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Paid By</th>
+                                    <th>Method</th>
+                                    <th>Ref / Notes</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in Model.Repayments.OrderByDescending(r => r.PaymentDate))
+                                {
+                                    <tr>
+                                        <td><span class="small fw-semibold">@r.PaymentDate.ToString("MMM dd, yyyy")</span></td>
+                                        <td><span class="small">@(r.RepaidByMember?.User?.DisplayName ?? "Member")</span></td>
+                                        <td><span class="badge bg-light text-dark border">@r.PaymentMethod</span></td>
+                                        <td><span class="text-muted small">@(r.ReferenceNumber ?? r.Notes ?? "—")</span></td>
+                                        <td class="text-end fw-bold text-success">@currencySymbol@r.Amount.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted bg-light rounded-2">No repayments recorded yet.</div>
+                }
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                <a asp-action="Index" class="btn btn-secondary-custom">Back to Debts</a>
+                @if (Model.Status != DebtStatus.PaidOff)
+                {
+                    <a asp-action="Repay" asp-route-id="@Model.Id" class="btn btn-primary-custom">Record Repayment</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>

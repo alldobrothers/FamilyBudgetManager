@@ -1,0 +1,74 @@
+@model List<FamilyBudget.Domain.Entities.InAppNotification>
+@{
+    ViewData["Title"] = "Household Alerts & Notifications";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Alerts & Notifications</h3>
+        <p class="text-muted mb-0">Household alerts, budget thresholds, and payment reminders</p>
+    </div>
+    @if (Model.Any(n => !n.IsRead))
+    {
+        <form asp-action="MarkAllRead" method="post" class="m-0">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-secondary-custom btn-sm">
+                <i class="bi bi-check2-all"></i> Mark All as Read
+            </button>
+        </form>
+    }
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        @if (Model.Any())
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (var n in Model)
+                {
+                    <div class="card glass-card border-0 p-3 @(!n.IsRead ? "border-start border-primary border-4" : "")">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="d-flex gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 @(n.NotificationType == NotificationType.BudgetAlert ? "bg-warning-subtle text-warning" : (n.NotificationType == NotificationType.BillReminder || n.NotificationType == NotificationType.DebtDue ? "bg-danger-subtle text-danger" : "bg-primary-subtle text-primary"))" style="width: 40px; height: 40px;">
+                                    @if (n.NotificationType == NotificationType.BudgetAlert)
+                                    {
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                    }
+                                    else if (n.NotificationType == NotificationType.BillReminder || n.NotificationType == NotificationType.DebtDue)
+                                    {
+                                        <i class="bi bi-alarm-fill"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-bell-fill"></i>
+                                    }
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">@n.Title</h6>
+                                    <p class="text-muted small mb-2">@n.Message</p>
+                                    <span class="text-muted" style="font-size: 0.75rem;">@n.CreatedAt.ToString("MMM dd, yyyy • hh:mm tt")</span>
+                                </div>
+                            </div>
+                            @if (!n.IsRead)
+                            {
+                                <form asp-action="MarkRead" asp-route-id="@n.Id" method="post" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-link text-decoration-none text-muted p-0" title="Mark as read">
+                                        <i class="bi bi-check2"></i>
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5 text-muted card glass-card border-0">
+                <i class="bi bi-bell-slash fs-1 mb-2"></i>
+                <div>No notifications at this time. You're all caught up!</div>
+            </div>
+        }
+    </div>
+</div>

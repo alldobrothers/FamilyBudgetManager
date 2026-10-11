@@ -1,0 +1,62 @@
+@model FamilyBudget.Web.Models.AcceptInviteViewModel
+@{
+    ViewData["Title"] = "Accept Household Invitation";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="text-center mb-4">
+            <div class="brand-icon mx-auto mb-3" style="width: 52px; height: 52px; font-size: 1.7rem;">
+                <i class="bi bi-envelope-paper-heart"></i>
+            </div>
+            <h3 class="fw-bold">Household Invitation</h3>
+            <p class="text-muted">You have been invited to collaborate on household finances</p>
+        </div>
+
+        <div class="card glass-card border-0 p-4 text-center">
+            @if (Model.IsExpired)
+            {
+                <div class="text-danger mb-3 display-4"><i class="bi bi-x-circle"></i></div>
+                <h5 class="fw-bold text-danger">Invalid or Expired Invitation</h5>
+                <p class="text-muted small">This invitation link has expired or has already been used. Please request the family owner to send a new invitation.</p>
+                <div class="mt-3">
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-secondary-custom">Back to Login</a>
+                </div>
+            }
+            else
+            {
+                <h4 class="fw-bold text-primary mb-2">@Model.FamilyName</h4>
+                <p class="text-muted mb-3">Invited by <strong>@Model.InviterName</strong> as <span class="badge badge-pill-custom badge-role">@Model.Role</span></p>
+
+                <p class="text-secondary small mb-4">
+                    Joining this household will allow you to share expenses, review budgets, and synchronize family finances collaboratively.
+                </p>
+
+                <form asp-action="ConfirmAcceptInvite" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="token" value="@Model.Token" />
+
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <button type="submit" class="btn btn-primary-custom w-100 justify-content-center py-2 mb-2">
+                            <i class="bi bi-check2-circle"></i> Accept & Join Household
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info py-2 small mb-3">
+                            Please sign in or create an account to accept this invitation.
+                        </div>
+                        <a asp-controller="Account" asp-action="Login" asp-route-returnurl="@Context.Request.Path@Context.Request.QueryString" class="btn btn-primary-custom w-100 justify-content-center py-2 mb-2">
+                            <i class="bi bi-box-arrow-in-right"></i> Sign In to Accept
+                        </a>
+                        <a asp-controller="Account" asp-action="Register" class="btn btn-secondary-custom w-100 justify-content-center py-2">
+                            Create New Account
+                        </a>
+                    }
+                </form>
+            }
+        </div>
+    </div>
+</div>

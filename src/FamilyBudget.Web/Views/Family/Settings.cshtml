@@ -1,0 +1,94 @@
+@model FamilyBudget.Web.Models.FamilySettingsViewModel
+@{
+    ViewData["Title"] = "Household Settings";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card glass-card border-0 p-4">
+            <h4 class="fw-bold mb-1">Household Preferences & Rules</h4>
+            <p class="text-muted small mb-4">Configure household currency, billing cycle dates, and financial guardrails</p>
+
+            <form asp-action="Settings" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="FamilyId" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="mb-4">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label asp-for="CurrencySymbol" class="form-label"></label>
+                        <input asp-for="CurrencySymbol" class="form-control" />
+                        <span asp-validation-for="CurrencySymbol" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="CurrencyCode" class="form-label"></label>
+                        <input asp-for="CurrencyCode" class="form-control" />
+                        <span asp-validation-for="CurrencyCode" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="MonthStartDay" class="form-label"></label>
+                    <input asp-for="MonthStartDay" type="number" min="1" max="28" class="form-control" />
+                    <div class="form-text small">Day of the month when your financial cycle begins (e.g. 1st or salary day like 5th).</div>
+                    <span asp-validation-for="MonthStartDay" class="text-danger small"></span>
+                </div>
+
+                <hr class="my-4 text-muted" />
+
+                <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-lock text-primary"></i> Financial Controls & Alerts
+                </h6>
+
+                <div class="form-check form-switch mb-4">
+                    <input asp-for="EnableExpenseApprovals" class="form-check-input" type="checkbox" id="approvalsSwitch" />
+                    <label class="form-check-label fw-semibold" for="approvalsSwitch">Require Admin Approval for Member Expenses</label>
+                    <div class="form-text small">When turned on, non-admin members' expenses will remain pending until approved by an Owner or Admin.</div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label asp-for="BudgetWarningThreshold1" class="form-label"></label>
+                        <div class="input-group">
+                            <input asp-for="BudgetWarningThreshold1" class="form-control" type="number" min="10" max="100" />
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="form-text small">First yellow warning banner in dashboard.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="BudgetWarningThreshold2" class="form-label"></label>
+                        <div class="input-group">
+                            <input asp-for="BudgetWarningThreshold2" class="form-control" type="number" min="10" max="150" />
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="form-text small">Critical danger alert when budget is near exhaustion.</div>
+                    </div>
+                </div>
+
+                <div class="form-check form-switch mb-4">
+                    <input asp-for="NotifyOnOverdueBills" class="form-check-input" type="checkbox" id="billsNotifySwitch" />
+                    <label class="form-check-label fw-semibold" for="billsNotifySwitch">Notify Members on Overdue Bills</label>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-controller="Dashboard" asp-action="Index" class="btn btn-secondary-custom">Back</a>
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="bi bi-save"></i> Save Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
