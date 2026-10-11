@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family Budget Manager | Cloudflare D1 Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-icon">
+        <i class="bi bi-wallet2 text-white"></i>
+      </div>
+      <div>
+        <div class="brand-title">Family Budget</div>
+        <small style="color: #64748b; font-size: 0.72rem; letter-spacing: 0.5px;">CLOUDFLARE D1</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="switchTab('dashboard')">
+        <i class="bi bi-grid-1x2-fill"></i>
+        <span>Dashboard</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('expenses')">
+        <i class="bi bi-cart3"></i>
+        <span>Expenses</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('incomes')">
+        <i class="bi bi-cash-stack"></i>
+        <span>Income</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('bills')">
+        <i class="bi bi-calendar-check"></i>
+        <span>Recurring Bills</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('debts')">
+        <i class="bi bi-arrow-left-right"></i>
+        <span>Debts & Loans</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('obligations')">
+        <i class="bi bi-exclamation-octagon"></i>
+        <span>Obligations</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('reports')">
+        <i class="bi bi-pie-chart-fill"></i>
+        <span>Analytics</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar" id="avatarLetter">R</div>
+        <div>
+          <div style="font-weight: 600; font-size: 0.9rem;" id="userDisplayName">Rajesh Sharma</div>
+          <small style="color: #64748b; font-size: 0.75rem;">Family Owner</small>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Wrapper -->
+  <div class="main-wrapper">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="family-pill">
+        <i class="bi bi-house-door-fill text-indigo-400"></i>
+        <span id="householdName">Sharma Household</span>
+        <span style="opacity: 0.6;">(₹ INR)</span>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="btn-primary-gradient" onclick="openExpenseModal()">
+          <i class="bi bi-plus-circle-fill"></i>
+          <span>Add Expense</span>
+        </button>
+        <button class="btn-primary-gradient" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="openIncomeModal()">
+          <i class="bi bi-plus-circle-fill"></i>
+          <span>Record Income</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Panels -->
+    <main class="content-body">
+      <!-- 1. DASHBOARD TAB -->
+      <section id="tab-dashboard" class="tab-panel">
+        <div class="metrics-grid">
+          <div class="glass-card metric-card">
+            <div class="metric-icon income"><i class="bi bi-arrow-down-left"></i></div>
+            <div class="metric-info">
+              <h4>Total Income</h4>
+              <div class="value" id="kpiIncome" style="color: var(--success);">₹0</div>
+            </div>
+          </div>
+          <div class="glass-card metric-card">
+            <div class="metric-icon expense"><i class="bi bi-arrow-up-right"></i></div>
+            <div class="metric-info">
+              <h4>Total Expenses</h4>
+              <div class="value" id="kpiExpense" style="color: var(--danger);">₹0</div>
+            </div>
+          </div>
+          <div class="glass-card metric-card">
+            <div class="metric-icon savings"><i class="bi bi-shield-check"></i></div>
+            <div class="metric-info">
+              <h4>Net Savings</h4>
+              <div class="value" id="kpiSavings" style="color: var(--primary);">₹0</div>
+            </div>
+          </div>
+          <div class="glass-card metric-card">
+            <div class="metric-icon debt"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="metric-info">
+              <h4>Active Debt</h4>
+              <div class="value" id="kpiDebt" style="color: var(--warning);">₹0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Charts -->
+          <div class="glass-card">
+            <div class="section-title">
+              <span>Category Spending Breakdown</span>
+              <small style="color: #64748b; font-weight: 400;">Current Month</small>
+            </div>
+            <div style="height: 280px; position: relative;">
+              <canvas id="categoryChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Upcoming Bills Widget -->
+          <div class="glass-card">
+            <div class="section-title">
+              <span>Upcoming Bills</span>
+              <i class="bi bi-clock-history text-indigo-400"></i>
+            </div>
+            <div id="upcomingBillsList">
+              <p style="color: #64748b;">Loading bills...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="glass-card">
+          <div class="section-title">
+            <span>Recent Transactions</span>
+            <button class="btn-primary-gradient" style="padding: 6px 12px; font-size: 0.8rem;" onclick="switchTab('expenses')">View All</button>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Category</th>
+                  <th>Amount</th>
+                  <th>Paid By</th>
+                  <th>Method</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="recentTransactionsTable">
+                <tr><td colspan="6" style="text-align: center; color: #64748b;">Loading transactions...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. EXPENSES TAB -->
+      <section id="tab-expenses" class="tab-panel" style="display: none;">
+        <div class="glass-card">
+          <div class="section-title">
+            <span>Household Expenses</span>
+            <button class="btn-primary-gradient" onclick="openExpenseModal()"><i class="bi bi-plus-lg"></i> Add Expense</button>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Expense Title</th>
+                  <th>Category</th>
+                  <th>Amount</th>
+                  <th>Paid By</th>
+                  <th>Payment Method</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="expensesTableBody">
+                <tr><td colspan="7" style="text-align: center; color: #64748b;">Loading expenses...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. INCOMES TAB -->
+      <section id="tab-incomes" class="tab-panel" style="display: none;">
+        <div class="glass-card">
+          <div class="section-title">
+            <span>Household Income Stream</span>
+            <button class="btn-primary-gradient" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="openIncomeModal()"><i class="bi bi-plus-lg"></i> Record Income</button>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Title / Source</th>
+                  <th>Category</th>
+                  <th>Amount</th>
+                  <th>Recipient Member</th>
+                  <th>Method</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="incomesTableBody">
+                <tr><td colspan="6" style="text-align: center; color: #64748b;">Loading income records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. RECURRING BILLS TAB -->
+      <section id="tab-bills" class="tab-panel" style="display: none;">
+        <div class="glass-card">
+          <div class="section-title">
+            <span>Recurring Bills & Upcoming Due Dates</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Bill Name</th>
+                  <th>Payee</th>
+                  <th>Expected Amount</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="billsTableBody">
+                <tr><td colspan="6" style="text-align: center; color: #64748b;">Loading bills...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. DEBTS TAB -->
+      <section id="tab-debts" class="tab-panel" style="display: none;">
+        <div class="glass-card">
+          <div class="section-title">
+            <span>Debts, Loans & Receivables</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Creditor / Debtor</th>
+                  <th>Type</th>
+                  <th>Principal</th>
+                  <th>Current Balance</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="debtsTableBody">
+                <tr><td colspan="6" style="text-align: center; color: #64748b;">Loading debts...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. OBLIGATIONS TAB -->
+      <section id="tab-obligations" class="tab-panel" style="display: none;">
+        <div class="glass-card">
+          <div class="section-title">
+            <span>Household Payment Obligations</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Obligation Title</th>
+                  <th>Payee</th>
+                  <th>Amount Due</th>
+                  <th>Due Date</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="obligationsTableBody">
+                <tr><td colspan="6" style="text-align: center; color: #64748b;">Loading obligations...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. REPORTS TAB -->
+      <section id="tab-reports" class="tab-panel" style="display: none;">
+        <div class="glass-card">
+          <div class="section-title">
+            <span>Monthly Financial Analytics</span>
+          </div>
+          <div class="dashboard-grid">
+            <div>
+              <canvas id="reportsCategoryChart" style="max-height: 320px;"></canvas>
+            </div>
+            <div>
+              <canvas id="reportsMemberChart" style="max-height: 320px;"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Expense Modal -->
+  <div id="expenseModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="section-title">
+        <span>Add New Expense</span>
+        <button style="background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;" onclick="closeModal('expenseModal')">&times;</button>
+      </div>
+      <form id="expenseForm" onsubmit="handleCreateExpense(event)">
+        <div class="form-group">
+          <label>Expense Title</label>
+          <input type="text" id="expTitle" class="form-control" placeholder="e.g. Grocery Restock" required>
+        </div>
+        <div class="form-group">
+          <label>Amount (₹)</label>
+          <input type="number" step="0.01" id="expAmount" class="form-control" placeholder="0.00" required>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="expCategory" class="form-control" required></select>
+        </div>
+        <div class="form-group">
+          <label>Payment Method</label>
+          <select id="expMethod" class="form-control">
+            <option value="UPI">UPI / GPay / PhonePe</option>
+            <option value="Credit Card">Credit Card</option>
+            <option value="Net Banking">Net Banking</option>
+            <option value="Cash">Cash</option>
+          </select>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn-primary-gradient" style="background: #334155;" onclick="closeModal('expenseModal')">Cancel</button>
+          <button type="submit" class="btn-primary-gradient">Save Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Income Modal -->
+  <div id="incomeModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="section-title">
+        <span>Record Income</span>
+        <button style="background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;" onclick="closeModal('incomeModal')">&times;</button>
+      </div>
+      <form id="incomeForm" onsubmit="handleCreateIncome(event)">
+        <div class="form-group">
+          <label>Income Title</label>
+          <input type="text" id="incTitle" class="form-control" placeholder="e.g. Monthly Salary" required>
+        </div>
+        <div class="form-group">
+          <label>Amount (₹)</label>
+          <input type="number" step="0.01" id="incAmount" class="form-control" placeholder="0.00" required>
+        </div>
+        <div class="form-group">
+          <label>Source / Category</label>
+          <select id="incCategory" class="form-control" required></select>
+        </div>
+        <div class="form-group">
+          <label>Payment Method</label>
+          <select id="incMethod" class="form-control">
+            <option value="Bank Transfer">Bank Transfer (NEFT/IMPS)</option>
+            <option value="UPI">UPI</option>
+            <option value="Cheque">Cheque</option>
+            <option value="Cash">Cash</option>
+          </select>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn-primary-gradient" style="background: #334155;" onclick="closeModal('incomeModal')">Cancel</button>
+          <button type="submit" class="btn-primary-gradient" style="background: linear-gradient(135deg, #10b981, #059669);">Save Income</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

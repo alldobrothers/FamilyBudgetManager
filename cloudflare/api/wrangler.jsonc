@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "family-budget-manager",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-02-14",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "../frontend/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "family-budget-db",
+      "database_id": "6aac3ce7-c831-4f6b-9a70-0d9013bb66ee"
+    }
+  ]
+}

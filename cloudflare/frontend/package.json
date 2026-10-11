@@ -1,0 +1,7 @@
+{
+  "name": "family-budget-frontend",
+  "version": "1.0.0",
+  "dependencies": {
+    "hono": "^4.7.2"
+  }
+}

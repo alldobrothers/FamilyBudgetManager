@@ -28,3 +28,9 @@ wwwroot/uploads/*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Node & Cloudflare
+node_modules/
+.wrangler/
+_worker.js
+package-lock.json

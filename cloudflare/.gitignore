@@ -1,0 +1,4 @@
+cloudflare/api/node_modules/
+cloudflare/frontend/node_modules/
+cloudflare/frontend/dist/_worker.js
+.wrangler/
